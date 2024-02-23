@@ -14,3 +14,4 @@ authlib
 flask
 flask-sqlalchemy
 requests
+werkzeug

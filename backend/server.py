@@ -1,5 +1,7 @@
 import os
-from flask import Flask
+
+import werkzeug
+from flask import Flask, render_template
 from backend.models import db, User
 from backend.oauth2 import config_oauth
 from backend.routes import bp
@@ -33,7 +35,8 @@ def setup_app(app):
     with app.app_context():
         db.create_all()
         if len(User.query.filter_by(isAdmin=True).all()) == 0:
-            db.session.add(User(username="admin", email="admin@admin.com", name="Admin", surname="Admin", password=User.gen_password("admin"), isAdmin=True))
+            db.session.add(User(username="admin", email="admin@admin.com", name="Admin", surname="Admin",
+                                password=User.gen_password("admin"), isAdmin=True))
             db.session.commit()
     config_oauth(app)
     app.register_blueprint(bp, url_prefix='')
@@ -45,5 +48,30 @@ app = create_app({
     'SQLALCHEMY_TRACK_MODIFICATIONS': False,
     'SQLALCHEMY_DATABASE_URI': DB_URI,
 })
+
+
+@app.errorhandler(werkzeug.exceptions.NotFound)
+def handle_not_found(e):
+    return render_template("error_template.html", code=404,
+                           message="The resource you're trying to access does not exist."), 404
+
+
+@app.errorhandler(werkzeug.exceptions.Forbidden)
+def handle_forbidden(e):
+    return render_template("error_template.html", code=403,
+                           message="You are not allowed to proceed."), 403
+
+
+@app.errorhandler(werkzeug.exceptions.Unauthorized)
+def handle_unauthorized(e):
+    return render_template("error_template.html", code=401,
+                           message="You entered the wrong credentials."), 401
+
+
+@app.errorhandler(werkzeug.exceptions.InternalServerError)
+def handle_forbidden(e):
+    return render_template("error_template.html", code=500,
+                           message="An unhandled error has occurred. Please notify administrators if this keeps happening."), 500
+
 
 app.run("0.0.0.0", 8000, True)

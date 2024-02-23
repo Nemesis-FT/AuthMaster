@@ -1,5 +1,7 @@
 import threading
 import time
+
+import werkzeug
 from flask import Blueprint, request, session, url_for, abort
 from flask import render_template, redirect, jsonify
 from werkzeug.security import gen_salt
@@ -8,6 +10,7 @@ from authlib.oauth2 import OAuth2Error
 from backend.models import db, User, OAuth2Client, Token
 from backend.oauth2 import authorization, require_oauth
 import requests
+import json
 
 from backend.settings import SENDINBLUE_KEY, RECOVERY_SECS
 
@@ -104,25 +107,64 @@ def lost_credentials(step):
     abort(404)
 
 
+@bp.route("/user/list")
+def user_list():
+    user: User = current_user()
+    if not user or not user.isAdmin:
+        abort(403)
+    return render_template('admin/users/list.html', user=user, users=User.query.all())
+
+
+@bp.route("/user/<int:uid>/delete")
+def user_delete(uid):
+    user: User = current_user()
+    if not user or not user.isAdmin:
+        abort(403)
+    target = User.query.get_or_404(uid)
+    if target == user:
+        abort(403)
+    db.session.delete(target)
+    db.session.commit()
+    return redirect(url_for("home.user_list"))
+
+
+@bp.route("/user/add", methods=["POST"])
+def user_add():
+    user = current_user()
+    if not user or not user.isAdmin:
+        abort(403)
+    db.session.add(User(
+        username=request.form.get("username"),
+        email=request.form.get("email"),
+        name=request.form.get("name"),
+        surname=request.form.get("surname"),
+        password=User.gen_password(request.form.get("password"))
+    ))
+    db.session.commit()
+    return redirect(url_for("home.user_list"))
+
+
 @bp.route("/user/<int:uid>/edit", methods=["POST"])
 def user_edit(uid):
-    user: User = User.query.get_or_404(uid)
-    if not user or (user.id != uid and not user.isAdmin):
+    user = current_user()
+    target: User = User.query.get_or_404(uid)
+    if not target or (target.id != uid and not user.isAdmin):
         abort(403)
-    user.username = request.form.get("username")
-    user.email = request.form.get("email")
-    user.name = request.form.get("name")
-    user.surname = request.form.get("surname")
+    target.username = request.form.get("username")
+    target.email = request.form.get("email")
+    target.name = request.form.get("name")
+    target.surname = request.form.get("surname")
     db.session.commit()
     return redirect("/")
 
 
 @bp.route("/user/<int:uid>/edit_psw", methods=["POST"])
 def user_password_edit(uid):
-    user: User = User.query.get_or_404(uid)
-    if not user or (user.id != uid and not user.isAdmin):
+    user = current_user()
+    target: User = User.query.get_or_404(uid)
+    if not target or (target.id != uid and not user.isAdmin):
         abort(403)
-    user.password = User.gen_password(request.form.get("password"))
+    target.password = User.gen_password(request.form.get("password"))
     db.session.commit()
     return redirect("/")
 
@@ -139,7 +181,7 @@ def create_client():
     if not user or not user.isAdmin:
         return redirect('/')
     if request.method == 'GET':
-        return render_template('create_client.html')
+        return render_template('admin/clients/create_client.html')
 
     client_id = gen_salt(24)
     client_id_issued_at = int(time.time())
@@ -169,6 +211,39 @@ def create_client():
     db.session.add(client)
     db.session.commit()
     return redirect('/')
+
+
+@bp.route('/admin/client/<int:uid>/edit', methods=('GET', 'POST'))
+def edit_client(uid):
+    user: User = current_user()
+    if not user or not user.isAdmin:
+        return redirect('/')
+    client = OAuth2Client.query.get_or_404(uid)
+    if request.method == 'GET':
+        return render_template('admin/clients/edit_client.html', client=client)
+    if request.method == "POST":
+        client.set_client_metadata(json.loads(request.form.get("metadata").replace("'", "\"")))
+        db.session.commit()
+        return redirect(url_for("home.edit_client", uid=uid))
+
+
+@bp.route('/admin/client/<int:uid>/delete')
+def delete_client(uid):
+    user: User = current_user()
+    if not user or not user.isAdmin:
+        return redirect('/')
+    client = OAuth2Client.query.get_or_404(uid)
+    db.session.delete(client)
+    db.session.commit()
+    return redirect(url_for("home.list_client"))
+
+
+@bp.route('/admin/client/list')
+def list_client():
+    user: User = current_user()
+    if not user or not user.isAdmin:
+        return redirect('/')
+    return render_template('admin/clients/list.html', user=user, clients=OAuth2Client.query.all())
 
 
 @bp.route('/oauth/authorize', methods=['GET', 'POST'])

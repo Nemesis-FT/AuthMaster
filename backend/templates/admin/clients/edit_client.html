@@ -1,0 +1,24 @@
+{% extends "stampo.html" %}
+{% block title %}Add client{% endblock %}
+{% block content %}
+  <h2>Client details</h2>
+  <style>pre{white-space:wrap}</style>
+<pre>
+<strong>Client Info</strong>
+  {%- for key in client.client_info %}
+  <strong>{{ key }}: </strong>  <a data-toggle="collapse" href="#collapse{{key}}" role="button" aria-expanded="false" aria-controls="collapseExample">></a><div class="collapse" id="collapse{{key}}">{{client.client_info[key]}}</div>
+  {%- endfor %}
+<strong>Client Metadata</strong>
+  {%- for key in client.client_metadata %}
+  <strong>{{ key }}: </strong>{{ client.client_metadata[key] }}
+  {%- endfor %}
+</pre>
+<hr>
+<form action="" method="post">
+  <div class="form-group">
+    <label for="grants">Edit Client Metadata</label>
+    <textarea id="grants" class="form-control" name="metadata" cols="30" rows="10">{{client.client_metadata}}</textarea>
+  </div>
+  <button class="btn btn-primary">Submit</button>
+</form>
+{% endblock %}

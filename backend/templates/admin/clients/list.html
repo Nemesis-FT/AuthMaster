@@ -1,0 +1,28 @@
+{% extends "stampo.html" %}
+{% block title %}User management{% endblock %}
+{% block content %}
+<h2>Client management</h2>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th scope="col">id</th>
+        <th scope="col">name</th>
+        <th scope="col">client_id</th>
+        <th scope="col">actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for client in clients %}
+    <tr>
+        <th>{{client.id}}</th>
+        <th>{{client.client_metadata["client_name"]}}</th>
+        <th>{{client.client_id}}</th>
+        <th><a href="/admin/client/{{client.id}}/delete">Delete</a> <a href="/admin/client/{{client.id}}/edit">Details</a></th>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+

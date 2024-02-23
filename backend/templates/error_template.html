@@ -1,0 +1,16 @@
+{% extends "stampo.html" %}
+{% block title %}Error{% endblock %}
+{% block content %}
+    <h1>{{code}}</h1>
+    <blockquote>
+        {{message}}
+    </blockquote>
+    <div class="row">
+        <div class="col">
+        <a href="javascript:history.back();">Go back</a>
+        </div>
+        <div class="col">
+        <a href="/">Head back to home</a>
+        </div>
+    </div>
+{% endblock %}

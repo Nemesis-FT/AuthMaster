@@ -5,12 +5,14 @@
 {% block content %}
 <div class="jumbotron">
   <h3 class="display-3">Welcome back, {{user.username}}!</h3>
-{% if user.isAdmin %}
-<br><a href="{{ url_for('.create_client') }}">Create Client</a>
-{% endif %}
 </div>
-<h4>Account data</h4>
+{% if user.isAdmin %}
+<a class="btn btn-dark" href="{{ url_for('.list_client') }}">Client management</a>
+<a class="btn btn-dark" href="{{ url_for('.user_list') }}">User management</a>
 <hr>
+{% endif %}
+
+<h4>Account data</h4>
 <form action="/user/{{user.id}}/edit" method="POST">
   <div class="row">
     <div class="col">

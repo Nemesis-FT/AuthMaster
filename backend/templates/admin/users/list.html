@@ -1,0 +1,79 @@
+{% extends "stampo.html" %}
+{% block title %}User management{% endblock %}
+{% block content %}
+<h2>User management</h2>
+<p>
+    <a class="btn btn-primary" data-toggle="collapse" href="#collapseAdd" role="button" aria-expanded="false" aria-controls="collapseExample">
+        Add user
+    </a>
+</p>
+<div class="collapse" id="collapseAdd">
+    <div class="card card-body">
+        <h3>Add user</h3>
+        <form action="/user/add" method="POST">
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" class="form-control" id="username" name="username">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" class="form-control" id="email" name="email">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" class="form-control" id="name" name="name">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label for="surname">Surname</label>
+                        <input type="text" class="form-control" id="surname" name="surname">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="password1">Password</label>
+                <input type="password" class="form-control" id="password1" name="password">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+    <br>
+</div>
+
+
+<table class="table">
+    <thead>
+    <tr>
+        <th scope="col">id</th>
+        <th scope="col">username</th>
+        <th scope="col">email</th>
+        <th scope="col">name</th>
+        <th scope="col">surname</th>
+        <th scope="col">actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for usr in users %}
+    <tr>
+        <th>{{usr.id}}</th>
+        <th>{{usr.username}}</th>
+        <th>{{usr.email}}</th>
+        <th>{{usr.name}}</th>
+        <th>{{usr.surname}}</th>
+        <th><a href="/user/{{usr.id}}/delete">Delete</a></th>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+
