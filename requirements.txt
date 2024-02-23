@@ -13,3 +13,4 @@ fastapi-utils
 authlib
 flask
 flask-sqlalchemy
+requests

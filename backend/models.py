@@ -1,17 +1,47 @@
+import random
+import string
 import time
-from flask_sqlalchemy import SQLAlchemy
+import datetime
+
+import bcrypt
 from authlib.integrations.sqla_oauth2 import (
     OAuth2ClientMixin,
     OAuth2AuthorizationCodeMixin,
     OAuth2TokenMixin,
 )
+from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
 
+def generate_token():
+    return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(10))
+
+
+class Token(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    value = db.Column(db.String(10), nullable=False, default=generate_token, unique=True)
+    issue_time = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
+    user = db.relationship('User')
+
+    def is_valid(self, secs):
+        if (datetime.datetime.now()-self.issue_time).total_seconds() < int(secs):
+            return True
+        else:
+            return False
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(40), unique=True)
+    username = db.Column(db.String, unique=True)
+    email = db.Column(db.String, unique=True)
+    name = db.Column(db.String, nullable=True)
+    surname = db.Column(db.String, nullable=True)
+    password = db.Column(db.LargeBinary, nullable=True)
+    isAdmin = db.Column(db.Boolean, default=False, nullable=True)
+
+    def gen_password(password):
+        return bcrypt.hashpw(bytes(password, encoding="utf-8"), bcrypt.gensalt())
 
     def __str__(self):
         return self.username
@@ -20,7 +50,7 @@ class User(db.Model):
         return self.id
 
     def check_password(self, password):
-        return password == 'valid'
+        return bcrypt.hashpw(bytes(password, encoding="utf-8"), bcrypt.gensalt()) == self.password
 
 
 class OAuth2Client(db.Model, OAuth2ClientMixin):

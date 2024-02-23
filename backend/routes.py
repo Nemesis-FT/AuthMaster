@@ -1,13 +1,31 @@
+import threading
 import time
-from flask import Blueprint, request, session, url_for
+from flask import Blueprint, request, session, url_for, abort
 from flask import render_template, redirect, jsonify
 from werkzeug.security import gen_salt
 from authlib.integrations.flask_oauth2 import current_token
 from authlib.oauth2 import OAuth2Error
-from .models import db, User, OAuth2Client
-from .oauth2 import authorization, require_oauth
+from backend.models import db, User, OAuth2Client, Token
+from backend.oauth2 import authorization, require_oauth
+import requests
+
+from backend.settings import SENDINBLUE_KEY, RECOVERY_SECS
 
 bp = Blueprint('home', __name__)
+
+
+def mail_send(message, subject, destination):
+    r = requests.post(url="https://api.sendinblue.com/v3/smtp/email", headers={
+        'accept': 'application/json',
+        'api-key': SENDINBLUE_KEY,
+        'content-type': 'application/json'
+    }, json={
+        'sender': {'name': 'AuthMaster', 'email': 'noreply@authmaster.fermitech.dev'},
+        'to': [{'email': destination.email, 'name': destination.name + " " + destination.surname}],
+        'subject': subject,
+        'htmlContent': message
+    })
+    print(r.text)
 
 
 def current_user():
@@ -25,11 +43,9 @@ def split_by_crlf(s):
 def home():
     if request.method == 'POST':
         username = request.form.get('username')
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            user = User(username=username)
-            db.session.add(user)
-            db.session.commit()
+        user: User = User.query.filter_by(username=username).first()
+        if not user or user.check_password(request.form.get("password")):
+            abort(403)
         session['id'] = user.id
         # if user is not just to log in, but need to head back to the auth page, then go for it
         next_page = request.args.get('next')
@@ -45,16 +61,82 @@ def home():
     return render_template('home.html', user=user, clients=clients)
 
 
+@bp.route("/flow/lost_credentials/<int:step>", methods=["GET", "POST"])
+def lost_credentials(step):
+    user = current_user()
+    if user:
+        if request.method == "GET":
+            return render_template('account_recovery/changepassword.html', user=user)
+        abort(404)
+    if step == 1:
+        if request.method == "GET":
+            return render_template('account_recovery/emailinput.html')
+        else:
+            user: User = User.query.filter_by(email=request.form.get("email")).first()
+            session['restore_email'] = request.form.get("email")
+            if not user:
+                return redirect(url_for("lost_credentials", step=2))
+            token = Token(user_id=user.id)
+            db.session.add(token)
+            db.session.commit()
+            db.session.refresh(token)
+            thread = threading.Thread(target=mail_send, args=(
+                render_template("email/recovery.html", user=user, token=token), "Password Reset Request", user))
+            thread.start()
+            return redirect(url_for("home.lost_credentials", step=2))
+    if step == 2:
+        if request.method == "GET":
+            return render_template('account_recovery/tokeninput.html')
+        else:
+            user: User = User.query.filter_by(email=session["restore_email"]).first()
+            token: Token = Token.query.filter_by(user_id=user.id, value=request.form.get("token")).first()
+            if not token:
+                abort(401)
+            if not token.is_valid(RECOVERY_SECS):
+                db.session.delete(token)
+                db.session.commit()
+                abort(401)
+            session["id"] = user.id
+            session.pop("restore_email")
+            db.session.delete(token)
+            db.session.commit()
+            return redirect(url_for("home.lost_credentials", step=3))
+    abort(404)
+
+
+@bp.route("/user/<int:uid>/edit", methods=["POST"])
+def user_edit(uid):
+    user: User = User.query.get_or_404(uid)
+    if not user or (user.id != uid and not user.isAdmin):
+        abort(403)
+    user.username = request.form.get("username")
+    user.email = request.form.get("email")
+    user.name = request.form.get("name")
+    user.surname = request.form.get("surname")
+    db.session.commit()
+    return redirect("/")
+
+
+@bp.route("/user/<int:uid>/edit_psw", methods=["POST"])
+def user_password_edit(uid):
+    user: User = User.query.get_or_404(uid)
+    if not user or (user.id != uid and not user.isAdmin):
+        abort(403)
+    user.password = User.gen_password(request.form.get("password"))
+    db.session.commit()
+    return redirect("/")
+
+
 @bp.route('/logout')
 def logout():
     del session['id']
     return redirect('/')
 
 
-@bp.route('/create_client', methods=('GET', 'POST'))
+@bp.route('/admin/create_client', methods=('GET', 'POST'))
 def create_client():
-    user = current_user()
-    if not user:
+    user: User = current_user()
+    if not user or not user.isAdmin:
         return redirect('/')
     if request.method == 'GET':
         return render_template('create_client.html')

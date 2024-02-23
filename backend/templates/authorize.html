@@ -1,22 +1,32 @@
-<p>The application <strong>{{grant.client.client_name}}</strong> is requesting:
-<strong>{{ grant.request.scope }}</strong>
-</p>
+{% extends "stampo.html" %}
+{% block title %}Authorization{% endblock %}
+{% block content %}
+<div class="jumbotron">
+  <h3>Authorization request</h3>
+  <p>The application <strong>{{grant.client.client_name}}</strong> is requesting:
+    <strong>{{ grant.request.scope }}</strong>
+  </p>
 
-<p>
-  from You - a.k.a. <strong>{{ user.username }}</strong>
-</p>
+  <p>
+    from You - a.k.a. <strong>{{ user.username }}</strong>
+  </p>
 
-<form action="" method="post">
-  <label>
-    <input type="checkbox" name="confirm">
-    <span>Consent?</span>
-  </label>
-  {% if not user %}
-  <p>You haven't logged in. Log in with:</p>
-  <div>
-    <input type="text" name="username">
-  </div>
-  {% endif %}
-  <br>
-  <button>Submit</button>
-</form>
+  <form action="" method="post">
+    <label>
+      <input type="checkbox" name="confirm">
+      <span>Consent?</span>
+    </label>
+    {% if not user %}
+    <p>You haven't logged in. Log in with:</p>
+    <div>
+      <input class="form-check-input" type="text" name="username">
+      <input class="form-check-input" type="password" name="password">
+    </div>
+    {% endif %}
+    <br>
+    <button class="btn btn-primary">Proceed</button>
+  </form>
+</div>
+{% endblock %}
+
+

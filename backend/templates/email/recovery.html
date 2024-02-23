@@ -1,0 +1,17 @@
+<html>
+<head>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
+        integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+</head>
+<body>
+<div class="container">
+  <br>
+<div class="jumbotron">
+  <h3 class="display-3">Greetings, {{user.username}}</h3>
+  <p>Someone asked for a password reset for your account. If this wasn't you, ignore this email.</p>
+  <p>If this was indeed you, please paste this string when prompted on AuthMaster: <strong>{{token.value}}</strong>.</p>
+  <p>This is an automated response. Any answers to this email will be ignored.</p>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{% extends "stampo.html" %}
+{% block title %}Recovery{% endblock %}
+{% block content %}
+<div class="jumbotron">
+    <h4>An email was sent to your mail account, paste the recovery token contained within to proceed with the reset.</h4>
+    <form action="/flow/lost_credentials/2" method="POST">
+        <div class="form-group">
+            <label for="token">Token</label>
+            <input type="text" class="form-control" id="token" name="token">
+        </div>
+        <div class="form-group">
+            <button type="submit"  class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
