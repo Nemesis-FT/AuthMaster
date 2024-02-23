@@ -175,13 +175,13 @@ def logout():
     return redirect('/')
 
 
-@bp.route('/admin/create_client', methods=('GET', 'POST'))
+@bp.route('/admin/client/add', methods=('GET', 'POST'))
 def create_client():
     user: User = current_user()
     if not user or not user.isAdmin:
         return redirect('/')
     if request.method == 'GET':
-        return render_template('admin/clients/create_client.html')
+        return render_template('admin/clients/create_client.html', user=user)
 
     client_id = gen_salt(24)
     client_id_issued_at = int(time.time())
