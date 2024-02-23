@@ -1,0 +1,31 @@
+version: "2"
+
+volumes:
+  db:
+  files:
+
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: "authmaster"
+      POSTGRES_PASSWORD: "authmaster"
+      POSTGRES_DB: "authmaster"
+    volumes:
+      - "db:/var/lib/postgresql/data"
+    restart: always
+  backend:
+    image: "nemesisryg/authmaster:latest"
+    environment:
+      AUTHLIB_INSECURE_TRANSPORT: 1
+      DB_URI: "authmaster://authmaster:authmaster@localhost/authmaster"
+      PYTHONUNBUFFERED: 1
+      RECOVERY_SECS: 300
+      SECRET_KEY: "secret"
+    secrets:
+      - "SENDINBLUE_KEY"
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    restart: always

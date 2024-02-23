@@ -74,4 +74,4 @@ def handle_forbidden(e):
                            message="An unhandled error has occurred. Please notify administrators if this keeps happening."), 500
 
 
-app.run("0.0.0.0", 8000, True)
+app.run("0.0.0.0", 8000)
