@@ -82,5 +82,6 @@ class OAuth2Token(db.Model, OAuth2TokenMixin):
     def is_refresh_token_active(self):
         if self.revoked:
             return False
-        expires_at = self.issued_at + self.expires_in * 2
+        # It will expire after a month.
+        expires_at = self.issued_at + 2628000 * 2
         return expires_at >= time.time()
