@@ -16,3 +16,4 @@ flask-sqlalchemy
 requests
 werkzeug
 flask-wtf
+flask-cors

@@ -61,3 +61,6 @@ SENDINBLUE_KEY = setting_required("SENDINBLUE_KEY")
 DB_URI = setting_required("DB_URI")
 SECRET_KEY = setting_required("SECRET_KEY")
 RECOVERY_SECS = setting_required("RECOVERY_SECS")
+
+# Comma-separated browser origins allowed to call the token endpoint (e.g. Swagger UI or a SPA doing PKCE).
+CORS_ALLOWED_ORIGINS = [o.strip() for o in (setting_optional("CORS_ALLOWED_ORIGINS") or "").split(",") if o.strip()]

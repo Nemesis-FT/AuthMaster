@@ -2,11 +2,12 @@ import os
 
 import werkzeug
 from flask import Flask, render_template
+from flask_cors import CORS
 from flask_wtf.csrf import CSRFError
 from backend.models import db, User
 from backend.oauth2 import config_oauth
 from backend.routes import bp, csrf
-from backend.settings import DB_URI, SECRET_KEY
+from backend.settings import DB_URI, SECRET_KEY, CORS_ALLOWED_ORIGINS
 
 
 def create_app(config=None):
@@ -41,6 +42,8 @@ def setup_app(app):
             db.session.commit()
     config_oauth(app)
     csrf.init_app(app)
+    if CORS_ALLOWED_ORIGINS:
+        CORS(app, resources={r"/oauth/token": {"origins": CORS_ALLOWED_ORIGINS}})
     app.register_blueprint(bp, url_prefix='')
 
 

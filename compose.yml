@@ -22,6 +22,8 @@ services:
       DB_URI: "postgresql://authmaster:authmaster@db/authmaster"
       PYTHONUNBUFFERED: 1
       RECOVERY_SECS: 300
+      # Browser origins allowed to exchange codes at /oauth/token, comma-separated (e.g. Codex's Swagger UI).
+      CORS_ALLOWED_ORIGINS: "http://localhost:8081"
       SECRET_KEY: "secret"
       SENDINBLUE_KEY: "???"
     ports:
