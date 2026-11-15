@@ -5,7 +5,9 @@ volumes:
 
 services:
   db:
-    image: postgres
+    # Pin the major version: the data volume can only be opened by the major version that created it.
+    # Upgrading requires a dump/restore or pg_upgrade (and since 18, mounting /var/lib/postgresql instead).
+    image: postgres:16
     environment:
       POSTGRES_USER: "authmaster"
       POSTGRES_PASSWORD: "authmaster"
