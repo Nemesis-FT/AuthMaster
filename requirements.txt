@@ -10,7 +10,7 @@ lazy-object-proxy == 1.7.1
 psycopg2-binary >= 2.9.5
 bs4 == 0.0.1
 fastapi-utils
-authlib
+authlib==1.9.6
 flask
 flask-sqlalchemy
 requests
