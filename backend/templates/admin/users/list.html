@@ -11,6 +11,7 @@
     <div class="card card-body">
         <h3>Add user</h3>
         <form action="/user/add" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="row">
                 <div class="col">
                     <div class="form-group">
@@ -69,7 +70,12 @@
         <th>{{usr.email}}</th>
         <th>{{usr.name}}</th>
         <th>{{usr.surname}}</th>
-        <th><a href="/user/{{usr.id}}/delete">Delete</a></th>
+        <th>
+            <form action="/user/{{usr.id}}/delete" method="POST" style="display:inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-link p-0 align-baseline">Delete</button>
+            </form>
+        </th>
     </tr>
     {% endfor %}
     </tbody>

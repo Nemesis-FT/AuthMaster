@@ -4,6 +4,7 @@ import time
 import werkzeug
 from flask import Blueprint, request, session, url_for, abort
 from flask import render_template, redirect, jsonify
+from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import gen_salt
 from authlib.integrations.flask_oauth2 import current_token
 from authlib.oauth2 import OAuth2Error
@@ -15,6 +16,7 @@ import json
 from backend.settings import SENDINBLUE_KEY, RECOVERY_SECS
 
 bp = Blueprint('home', __name__)
+csrf = CSRFProtect()
 
 
 def mail_send(message, subject, destination):
@@ -47,7 +49,7 @@ def home():
     if request.method == 'POST':
         username = request.form.get('username')
         user: User = User.query.filter_by(username=username).first()
-        if not user or user.check_password(request.form.get("password")):
+        if not user or not user.check_password(request.form.get("password")):
             abort(403)
         session['id'] = user.id
         # if user is not just to log in, but need to head back to the auth page, then go for it
@@ -115,7 +117,7 @@ def user_list():
     return render_template('admin/users/list.html', user=user, users=User.query.all())
 
 
-@bp.route("/user/<int:uid>/delete")
+@bp.route("/user/<int:uid>/delete", methods=["POST"])
 def user_delete(uid):
     user: User = current_user()
     if not user or not user.isAdmin:
@@ -147,9 +149,9 @@ def user_add():
 @bp.route("/user/<int:uid>/edit", methods=["POST"])
 def user_edit(uid):
     user = current_user()
-    target: User = User.query.get_or_404(uid)
-    if not target or (target.id != uid and not user.isAdmin):
+    if not user or (user.id != uid and not user.isAdmin):
         abort(403)
+    target: User = User.query.get_or_404(uid)
     target.username = request.form.get("username")
     target.email = request.form.get("email")
     target.name = request.form.get("name")
@@ -161,17 +163,17 @@ def user_edit(uid):
 @bp.route("/user/<int:uid>/edit_psw", methods=["POST"])
 def user_password_edit(uid):
     user = current_user()
-    target: User = User.query.get_or_404(uid)
-    if not target or (target.id != uid and not user.isAdmin):
+    if not user or (user.id != uid and not user.isAdmin):
         abort(403)
+    target: User = User.query.get_or_404(uid)
     target.password = User.gen_password(request.form.get("password"))
     db.session.commit()
     return redirect("/")
 
 
-@bp.route('/logout')
+@bp.route('/logout', methods=['POST'])
 def logout():
-    del session['id']
+    session.pop('id', None)
     return redirect('/')
 
 
@@ -227,7 +229,7 @@ def edit_client(uid):
         return redirect(url_for("home.edit_client", uid=uid))
 
 
-@bp.route('/admin/client/<int:uid>/delete')
+@bp.route('/admin/client/<int:uid>/delete', methods=['POST'])
 def delete_client(uid):
     user: User = current_user()
     if not user or not user.isAdmin:
@@ -261,21 +263,30 @@ def authorize():
     if not user and 'username' in request.form:
         username = request.form.get('username')
         user = User.query.filter_by(username=username).first()
-    if request.form['confirm']:
+    if request.form.get('confirm'):
         grant_user = user
     else:
         grant_user = None
     return authorization.create_authorization_response(grant_user=grant_user)
 
 
+# Token endpoints are called server-to-server and authenticate the client explicitly, not via the session cookie.
 @bp.route('/oauth/token', methods=['POST'])
+@csrf.exempt
 def issue_token():
     return authorization.create_token_response()
 
 
 @bp.route('/oauth/revoke', methods=['POST'])
+@csrf.exempt
 def revoke_token():
     return authorization.create_endpoint_response('revocation')
+
+
+@bp.route('/oauth/introspect', methods=['POST'])
+@csrf.exempt
+def introspect_token():
+    return authorization.create_endpoint_response('introspection')
 
 
 @bp.route('/api/me')

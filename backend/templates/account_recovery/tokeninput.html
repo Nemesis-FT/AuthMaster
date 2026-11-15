@@ -4,6 +4,7 @@
 <div class="jumbotron">
     <h4>An email was sent to your mail account, paste the recovery token contained within to proceed with the reset.</h4>
     <form action="/flow/lost_credentials/2" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="token">Token</label>
             <input type="text" class="form-control" id="token" name="token">

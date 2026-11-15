@@ -1,4 +1,4 @@
-lxml == 4.9.1
+lxml >= 4.9.1
 uvicorn == 0.18.3
 fastapi == 0.85.0
 python-jose == 3.3.0
@@ -7,7 +7,7 @@ bcrypt == 4.0.0
 SQLAlchemy == 1.4.41
 python-multipart == 0.0.5
 lazy-object-proxy == 1.7.1
-psycopg2-binary == 2.9.5
+psycopg2-binary >= 2.9.5
 bs4 == 0.0.1
 fastapi-utils
 authlib
@@ -15,3 +15,4 @@ flask
 flask-sqlalchemy
 requests
 werkzeug
+flask-wtf

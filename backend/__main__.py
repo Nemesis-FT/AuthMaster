@@ -2,9 +2,10 @@ import os
 
 import werkzeug
 from flask import Flask, render_template
+from flask_wtf.csrf import CSRFError
 from backend.models import db, User
 from backend.oauth2 import config_oauth
-from backend.routes import bp
+from backend.routes import bp, csrf
 from backend.settings import DB_URI, SECRET_KEY
 
 
@@ -39,6 +40,7 @@ def setup_app(app):
                                 password=User.gen_password("admin"), isAdmin=True))
             db.session.commit()
     config_oauth(app)
+    csrf.init_app(app)
     app.register_blueprint(bp, url_prefix='')
 
 
@@ -47,6 +49,7 @@ app = create_app({
     'OAUTH2_REFRESH_TOKEN_GENERATOR': True,
     'SQLALCHEMY_TRACK_MODIFICATIONS': False,
     'SQLALCHEMY_DATABASE_URI': DB_URI,
+    'SESSION_COOKIE_SAMESITE': 'Lax',
 })
 
 
@@ -66,6 +69,13 @@ def handle_forbidden(e):
 def handle_unauthorized(e):
     return render_template("error_template.html", code=401,
                            message="You entered the wrong credentials."), 401
+
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    return render_template("error_template.html", code=400,
+                           message="Your session has expired or the request could not be verified. "
+                                   "Please go back, reload the page and try again."), 400
 
 
 @app.errorhandler(werkzeug.exceptions.InternalServerError)

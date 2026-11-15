@@ -15,6 +15,7 @@
 </pre>
 <hr>
 <form action="" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="form-group">
     <label for="grants">Edit Client Metadata</label>
     <textarea id="grants" class="form-control" name="metadata" cols="30" rows="10">{{client.client_metadata}}</textarea>

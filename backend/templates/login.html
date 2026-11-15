@@ -7,6 +7,7 @@
     <hr class="my-4">
     <p class="lead">
     <form action="" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="username">Username</label>
             <input type="text" class="form-control" id="username" aria-describedby="emailHelp"

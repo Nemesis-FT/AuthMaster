@@ -10,6 +10,7 @@ from authlib.integrations.sqla_oauth2 import (
 )
 from authlib.oauth2.rfc6749 import grants
 from authlib.oauth2.rfc7636 import CodeChallenge
+from authlib.oauth2.rfc7662 import IntrospectionEndpoint
 from backend.models import db, User
 from backend.models import OAuth2Client, OAuth2AuthorizationCode, OAuth2Token
 
@@ -73,6 +74,34 @@ class RefreshTokenGrant(grants.RefreshTokenGrant):
         db.session.commit()
 
 
+class TokenIntrospectionEndpoint(IntrospectionEndpoint):
+    def query_token(self, token_string, token_type_hint):
+        if token_type_hint == 'refresh_token':
+            return OAuth2Token.query.filter_by(refresh_token=token_string).first()
+        token = OAuth2Token.query.filter_by(access_token=token_string).first()
+        if not token and token_type_hint is None:
+            token = OAuth2Token.query.filter_by(refresh_token=token_string).first()
+        return token
+
+    def check_permission(self, token, client, request):
+        # A client may introspect its own tokens; resource servers (e.g. Codex) need the "introspect" scope
+        # to introspect tokens issued to other clients.
+        return token.client_id == client.client_id or 'introspect' in (client.scope or '').split()
+
+    def introspect_token(self, token):
+        return {
+            'active': True,
+            'client_id': token.client_id,
+            'token_type': token.token_type,
+            'username': token.user.username if token.user else None,
+            'scope': token.get_scope(),
+            'sub': str(token.user_id),
+            'aud': token.client_id,
+            'exp': token.issued_at + token.expires_in,
+            'iat': token.issued_at,
+        }
+
+
 query_client = create_query_client_func(db.session, OAuth2Client)
 save_token = create_save_token_func(db.session, OAuth2Token)
 authorization = AuthorizationServer(
@@ -95,6 +124,7 @@ def config_oauth(app):
     # support revocation
     revocation_cls = create_revocation_endpoint(db.session, OAuth2Token)
     authorization.register_endpoint(revocation_cls)
+    authorization.register_endpoint(TokenIntrospectionEndpoint)
 
     # protect resource
     bearer_cls = create_bearer_token_validator(db.session, OAuth2Token)

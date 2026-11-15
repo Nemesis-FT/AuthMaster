@@ -4,6 +4,7 @@
 <div class="jumbotron">
     <h4>Please enter your email with which you registered on this service.</h4>
     <form action="/flow/lost_credentials/1" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="email">Email</label>
             <input type="email" class="form-control" id="email" name="email">

@@ -50,7 +50,9 @@ class User(db.Model):
         return self.id
 
     def check_password(self, password):
-        return bcrypt.hashpw(bytes(password, encoding="utf-8"), bcrypt.gensalt()) == self.password
+        if not password or not self.password:
+            return False
+        return bcrypt.checkpw(bytes(password, encoding="utf-8"), self.password)
 
 
 class OAuth2Client(db.Model, OAuth2ClientMixin):
